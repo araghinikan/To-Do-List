@@ -1,6 +1,8 @@
 package com.nikan.todolist.dto;
 
 import com.nikan.todolist.model.Task;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 public class TaskDto {
     private String title;
@@ -13,6 +15,8 @@ public class TaskDto {
         return task;
     }
 
+    @NotBlank(message = "event.dto.title.blank")
+    @Size(min = 3, max = 100, message = "event.dto.title.size")
     public String getTitle() {
         return title;
     }
@@ -21,6 +25,8 @@ public class TaskDto {
         this.title = title;
     }
 
+    @NotBlank(message = "description.event.blank")
+    @Size(min = 20, max = 500, message = "description.event.size")
     public String getDescription() {
         return description;
     }

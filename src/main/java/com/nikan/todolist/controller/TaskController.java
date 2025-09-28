@@ -31,6 +31,20 @@ public class TaskController {
         }
     }
 
+    @PutMapping("/update/{id}")
+    public ResponseEntity<Object> update(@PathVariable int id) {
+        try {
+            Task existingTask = taskService.findById(id);
+            Task updatedTask = existingTask.changeStatus();
+            taskService.update(updatedTask);
+
+            return ResponseEntity.ok(updatedTask);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(null);
+        }
+    }
+
     @GetMapping("/getAll")
     public ResponseEntity<Page<Task>> getAll(Pageable pageable) {
         try {

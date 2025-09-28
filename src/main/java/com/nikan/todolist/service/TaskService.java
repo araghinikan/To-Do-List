@@ -7,6 +7,7 @@ import org.springframework.data.domain.Pageable;
 public interface TaskService {
     Task add (Task task);
     void delete(int id);
+    Task update (Task task);
     Task findById(int id);
     Page<Task> findAll(Pageable pageable);
 }

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>تسک‌ها</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: "Vazir", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }
+        #toast-container {
+            position: fixed;
+            top: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-width: 400px;
+            width: 90vw;
+        }
+        @keyframes fadein {
+            from {opacity: 0; transform: translateY(-10px);}
+            to {opacity:1; transform: translateY(0);}
+        }
+        @keyframes fadeout {
+            from {opacity: 1; transform: translateY(0);}
+            to {opacity:0; transform: translateY(-10px);}
+        }
+        .animate-fadein { animation: fadein 0.3s ease forwards; }
+        .animate-fadeout { animation: fadeout 0.3s ease forwards; }
+    </style>
+</head>
+<body class="bg-gradient-to-r from-indigo-400 via-purple-500 to-pink-500 min-h-screen p-6 flex flex-col items-center">
+
+<div class="bg-white rounded-xl shadow-xl max-w-6xl w-full overflow-x-auto">
+    <table class="w-full table-fixed text-right border-collapse border border-gray-300">
+        <thead class="bg-indigo-600 text-white">
+        <tr>
+            <th class="p-3 border border-indigo-700 w-16">آیدی</th>
+            <th class="p-3 border border-indigo-700 w-60">عنوان</th>
+            <th class="p-3 border border-indigo-700">توضیحات</th>
+            <th class="p-3 border border-indigo-700 w-40">تاریخ ساخت</th>
+            <th class="p-3 border border-indigo-700 w-24">وضعیت</th>
+            <th class="p-3 border border-indigo-700 w-36">تغییر وضعیت</th>
+            <th class="p-3 border border-indigo-700 w-24">حذف</th>
+        </tr>
+        </thead>
+        <tbody id="tasksBody" class="text-gray-800"></tbody>
+    </table>
+</div>
+
+<div id="toast-container" aria-live="assertive" aria-atomic="true"></div>
+
+<script>
+    const tasksBody = document.getElementById('tasksBody');
+    const toastContainer = document.getElementById('toast-container');
+
+    function showToast(message, isError = false) {
+        const toast = document.createElement('div');
+        toast.className = `p-4 rounded shadow text-white ${isError ? 'bg-red-600' : 'bg-green-600'} animate-fadein`;
+        toast.textContent = message;
+        toastContainer.appendChild(toast);
+        setTimeout(() => {
+            toast.classList.add('animate-fadeout');
+            toast.addEventListener('animationend', () => toast.remove());
+        }, 4000);
+    }
+
+    async function fetchTasks() {
+        try {
+            const response = await fetch('/tasks/getAll?page=0&size=100');
+            if (response.ok) {
+                const data = await response.json();
+                renderTasks(data.content || []);
+            } else {
+                showToast('خطا در دریافت تسک‌ها', true);
+            }
+        } catch {
+            showToast('عدم ارتباط با سرور', true);
+        }
+    }
+
+    function renderTasks(tasks) {
+        tasksBody.innerHTML = '';
+        tasks.forEach(task => {
+            const statusIcon = task.status === 'COMPLETED' ?
+                `<svg xmlns="http://www.w3.org/2000/svg" class="inline h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7" />
+           </svg>` :
+                `<svg xmlns="http://www.w3.org/2000/svg" class="inline h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12" />
+           </svg>`;
+
+            const tr = document.createElement('tr');
+            tr.className = 'border border-gray-300 hover:bg-gray-100';
+            tr.innerHTML = `
+          <td class="border p-2">${task.id}</td>
+          <td class="border p-2">${task.title}</td>
+          <td class="border p-2">${task.description ?? ''}</td>
+          <td class="border p-2">${task.madeDate ? new Date(task.madeDate).toLocaleDateString('fa-IR') : ''}</td>
+          <td class="border p-2 text-center">${statusIcon}</td>
+          <td class="border p-2 text-center">
+            <button onclick="changeStatus(${task.id})" class="bg-yellow-400 hover:bg-yellow-500 text-white font-semibold py-1 px-3 rounded">
+              تغییر وضعیت
+            </button>
+          </td>
+          <td class="border p-2 text-center">
+            <button onclick="deleteTask(${task.id})" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-1 px-3 rounded">
+              حذف
+            </button>
+          </td>
+        `;
+            tasksBody.appendChild(tr);
+        });
+    }
+
+    async function changeStatus(id) {
+        try {
+            const response = await fetch(`/tasks/update/${id}`, {
+                method: 'PUT',
+            });
+            if (response.ok) {
+                showToast('وضعیت تسک با موفقیت تغییر کرد');
+                await fetchTasks();
+            } else {
+                showToast('خطا در تغییر وضعیت', true);
+            }
+        } catch {
+            showToast('عدم ارتباط با سرور', true);
+        }
+    }
+
+    async function deleteTask(id) {
+        if (!confirm('آیا مطمئن هستید که می‌خواهید این تسک را حذف کنید؟')) return;
+        try {
+            const response = await fetch(`/tasks/delete/${id}`, {
+                method: 'GET',
+            });
+            if (response.ok) {
+                showToast('تسک با موفقیت حذف شد');
+                await fetchTasks();
+            } else {
+                showToast('خطا در حذف تسک', true);
+            }
+        } catch {
+            showToast('عدم ارتباط با سرور', true);
+        }
+    }
+
+    // Initial fetch on page load
+    fetchTasks();
+</script>
+</body>
+</html>

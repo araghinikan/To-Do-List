@@ -1,5 +1,6 @@
 package com.nikan.todolist.dto;
 
+import com.nikan.todolist.model.Status;
 import com.nikan.todolist.model.Task;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -12,6 +13,7 @@ public class TaskDto {
         Task task = new Task();
         task.setTitle(this.title);
         task.setDescription(this.description);
+        task.setStatus(Status.PENDING);
         return task;
     }
 

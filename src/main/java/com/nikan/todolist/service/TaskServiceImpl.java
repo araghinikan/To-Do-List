@@ -26,6 +26,11 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    public Task update(Task task) {
+        return toDoListRepository.save(task);
+    }
+
+    @Override
     public Task findById(int id) {
         return toDoListRepository.findById(id).orElseThrow(()-> new RuntimeException("Task not found"));
     }

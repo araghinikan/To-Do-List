@@ -1,19 +1,26 @@
 package com.nikan.todolist.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDate;
 
+@Entity
 public class Task {
     private int id;
     private String title;
     private String description;
-    private String status;
+    private Status status;
     private LocalDate MadeDate;
+
+    public Task changeStatus() {
+        if (this.status == Status.COMPLETED) {
+            this.status = Status.PENDING;
+        }else if (this.status == Status.PENDING) {
+            this.status = Status.COMPLETED;
+        }
+        return this;
+    }
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -42,11 +49,12 @@ public class Task {
         this.description = description;
     }
 
-    public String getStatus() {
+    @Enumerated(EnumType.STRING)
+    public Status getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(Status status) {
         this.status = status;
     }
 
